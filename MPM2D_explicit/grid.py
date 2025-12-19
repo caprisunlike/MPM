@@ -1,0 +1,74 @@
+from math import dist
+import taichi as ti
+
+@ti.data_oriented
+class Grid:
+    def __init__(self, mpm: ti.template()):
+        self.mpm = mpm
+        n = mpm.gridNum
+        dim = mpm.dim
+        
+        self.pos = ti.Vector.field(n=dim, dtype=ti.f32, shape=(n, n))
+        self.mass = ti.field(dtype=ti.f32, shape=(n, n))
+        self.vel = ti.Vector.field(n=dim, dtype=ti.f32, shape=(n, n))
+        self.force = ti.Vector.field(n=dim, dtype=ti.f32, shape=(n, n))
+        self.initialize()
+
+    @ti.kernel
+    def initialize(self):
+        for i, j in self.mass:
+            self.pos[i, j] = ti.Vector([i, j]) * self.mpm.dx
+            self.mass[i, j] = 0.0
+            self.vel[i, j] = ti.Vector([0.0, 0.0])
+            self.force[i, j] = ti.Vector([0.0, 0.0])
+
+    @ti.func
+    def compute_weights(self, fx):
+        #w = ti.Matrix.zero(ti.f32, 3, 3)
+        #for i in range(3):
+        #    for j in range(3):
+        #        wx = self.kernel(fx.x - (i-1))   # i=0,1,2 -> fx+1,fx,fx-1
+        #        wy = self.kernel(fx.y - (j-1))
+        #        w[i, j] = wx * wy
+        #return w
+        return self.kernel(fx.x) * self.kernel(fx.y)
+    
+    @ti.func
+    def compute_gradient_weights(self, fx):
+        #grad_wx = ti.Matrix.zero(ti.f32, 3, 3)
+        #grad_wy = ti.Matrix.zero(ti.f32, 3, 3)
+        #for i in range(3):
+        #    for j in range(3):
+        #        wx = self.kernel(fx.x - (i-1))
+        #        wy = self.kernel(fx.y - (j-1))
+        #        dwx = self.d_kernel(fx.x - (i-1))
+        #        dwy = self.d_kernel(fx.y - (j-1))
+        #        grad_wx[i, j] = self.mpm.inv_dx * dwx * wy
+        #        grad_wy[i, j] = self.mpm.inv_dx * wx * dwy
+        #return grad_wx, grad_wy
+        return ti.Vector([self.d_kernel(fx.x)*self.kernel(fx.y), self.kernel(fx.x)*self.d_kernel(fx.y)])
+
+    @ti.func
+    def kernel(self, x):   # quadratic B-spline kernel
+        result = 0.0
+        if abs(x) < 0.5:
+            result = 0.75 - x**2
+        elif 0.5 <= abs(x) < 1.5:
+            result = 0.5 * (1.5 - abs(x))**2
+        else:
+            result = 0.0
+        return result
+        
+    @ti.func
+    def d_kernel(self, x):   # derivative of quadratic B-spline kernel
+        result = 0.0
+        if abs(x) < 0.5:
+            result = -2.0 * x
+        elif 0.5 <= abs(x) < 1.5:
+            if x > 0:
+                result = -1.0 * (1.5 - abs(x))
+            else:
+                result = 1.0 * (1.5 - abs(x))
+        else:
+            result = 0.0
+        return result
