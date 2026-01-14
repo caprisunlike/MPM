@@ -8,7 +8,7 @@ class Particles:
         n = mpm.particlesNum
         dim = mpm.dim
 
-        self.m = 1.0   # mass
+        self.m = 0.01   # mass
         self.r = 2.0   # radius
         self.x = ti.Vector.field(n=dim, dtype=ti.f32, shape=n)   # position
         self.v = ti.Vector.field(n=dim, dtype=ti.f32, shape=n)   # velocity
@@ -27,6 +27,7 @@ class Particles:
         self.nu = 0.2   # Poisson's ratio
         self.mu = self.E / (2 * (1 + self.nu))   # Lame coefficient
         self.lam = self.E * self.nu / ((1 + self.nu) * (1 - 2 * self.nu))   # Lame coefficient
+        
         self.initialize()
 
     @ti.kernel
@@ -35,9 +36,9 @@ class Particles:
         dim = ti.static(self.mpm.dim)
         for i in range(n):
             self.x[i] = [(ti.random() * 0.8 + 0.1), (ti.random() * 0.8 + 0.1)]
-            self.v[i] = ti.Vector([0.1, 0.0])
+            self.v[i] = ti.Vector([0.9, 0.0])
             self.a[i] = ti.Vector([0.0, 0.0])
-            self.vol[i] = 1.0
+            self.vol[i] = self.mpm.dx * self.mpm.dx   # 초기 부피
             self.F[i] = ti.Matrix.identity(ti.f32, dim)
             self.B[i] = ti.Matrix.zero(ti.f32, dim, dim)
 

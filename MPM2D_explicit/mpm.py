@@ -16,7 +16,7 @@ class MPM:
         self.dx = 1.0 / self.gridNum
         self.inv_dx = 1.0 / self.dx
         self.t = 0.0
-        self.dt = 0.001
+        self.dt = 1e-4
         self.dim = 2
 
         self.gravity = ti.Vector([0.0, -9.8])

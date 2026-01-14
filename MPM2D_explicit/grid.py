@@ -12,15 +12,21 @@ class Grid:
         self.mass = ti.field(dtype=ti.f32, shape=(n, n))
         self.vel = ti.Vector.field(n=dim, dtype=ti.f32, shape=(n, n))
         self.force = ti.Vector.field(n=dim, dtype=ti.f32, shape=(n, n))
+
+        self.init_grid_position()
         self.initialize()
 
     @ti.kernel
     def initialize(self):
         for i, j in self.mass:
-            self.pos[i, j] = ti.Vector([i, j]) * self.mpm.dx
             self.mass[i, j] = 0.0
             self.vel[i, j] = ti.Vector([0.0, 0.0])
             self.force[i, j] = ti.Vector([0.0, 0.0])
+
+    @ti.kernel
+    def init_grid_position(self):
+        for i, j in self.pos:
+            self.pos[i, j] = ti.Vector([i, j]) * self.mpm.dx   # 파티클 기준 좌표
 
     @ti.func
     def compute_weights(self, fx):
@@ -46,7 +52,7 @@ class Grid:
         #        grad_wx[i, j] = self.mpm.inv_dx * dwx * wy
         #        grad_wy[i, j] = self.mpm.inv_dx * wx * dwy
         #return grad_wx, grad_wy
-        return ti.Vector([self.d_kernel(fx.x)*self.kernel(fx.y), self.kernel(fx.x)*self.d_kernel(fx.y)])
+        return ti.Vector([self.mpm.inv_dx*self.d_kernel(fx.x)*self.kernel(fx.y), self.kernel(fx.x)*self.mpm.inv_dx*self.d_kernel(fx.y)])
 
     @ti.func
     def kernel(self, x):   # quadratic B-spline kernel

@@ -9,34 +9,33 @@ class Simulation:
         self.grid = grid
         self.boundary = boundary
 
-        self.total_w_sum = ti.field(dtype=ti.f32, shape=())
+        #self.total_w_sum = ti.field(dtype=ti.f32, shape=())
 
         return
 
     def simulation(self):
         self.grid.initialize()
-
         self.particle_to_grid(self.mpm, self.grid, self.particles)
-        self.debug_particles(self.particles)
+        #self.debug_particles(self.particles)
         self.compute_grid_velocities(self.grid)
-        self.debug_particles(self.particles)
+        #self.debug_particles(self.particles)
         #self.identify_grid_degree_of_freedoms()
         self.compute_explicit_grid_forces(self.mpm, self.grid, self.particles)
-        self.debug_particles(self.particles)
+        #self.debug_particles(self.particles)
         self.grid_velocity_update(self.mpm, self.grid)
-        self.debug_particles(self.particles)
+        #self.debug_particles(self.particles)
         self.update_particle_deformation_gradient(self.mpm, self.grid, self.particles)
         self.grid_to_particle(self.mpm, self.grid, self.particles)
-        self.debug_particles(self.particles)
+        #self.debug_particles(self.particles)
         self.particle_advection(self.mpm, self.particles)
-        self.debug_particles(self.particles)
-        print("----- Step Finished -----")
+        #self.debug_particles(self.particles)
+        #print("----- Step Finished -----")
 
     @ti.kernel
     def particle_to_grid(self, mpm: ti.template(), grid: ti.template(), particles: ti.template()):
         
         for p in range(mpm.particlesNum):
-            self.total_w_sum[None] = 0.0
+            #self.total_w_sum[None] = 0.0
             base = mpm.pos_to_idx(particles.x[p])   # 기준이 되는 인덱스
 
             w_sum = 0.0
@@ -47,17 +46,17 @@ class Simulation:
                     idx = ti.Vector([base.x + i, base.y + j])
                     if idx.x < 0 or idx.x >= mpm.gridNum or idx.y < 0 or idx.y >= mpm.gridNum:
                         continue
-                    fx = particles.x[p] * mpm.inv_dx - idx.cast(float)   # fractional position : idx로부터 상대 거리
+                    fx = particles.x[p] * mpm.inv_dx - idx.cast(float)   # fractional position : idx로부터 상대 거리   (그리드 기준좌표)
                     w = grid.compute_weights(fx)
                     #if p == 0:
                     #    print(particles.x[p], base, idx, fx, w)
 
-                    w_sum += w
+                    #w_sum += w
                     # grid mass
                     grid.mass[idx] += w * particles.m
 
                     # grid momentum
-                    affine = particles.B[p] @ particles.D_inv @ (-fx)
+                    affine = particles.B[p] @ particles.D_inv @ (-fx*mpm.dx)
                     momentum = particles.m * (particles.v[p] + affine)
                     grid.vel[idx] += w * momentum
 
@@ -65,8 +64,8 @@ class Simulation:
             #ti.atomic_add(self.total_w_sum[None], w_sum)
             #print("Total weight sum on grid:", self.total_w_sum[None])
 
-            if p == 0:
-                print("Particle 0 weight sum:", w_sum)
+            #if p == 0:
+            #    print("Particle 0 weight sum:", w_sum)
 
         return
     
@@ -101,14 +100,14 @@ class Simulation:
                     if idx.x < 0 or idx.x >= mpm.gridNum or idx.y < 0 or idx.y >= mpm.gridNum:
                         continue
                     fx = particles.x[p] * mpm.inv_dx - idx.cast(float)
-                    #w = grid.compute_weights(fx)
+                    w = grid.compute_weights(fx)
                     grad_w = grid.compute_gradient_weights(fx)
 
                     # 내부힘
                     grid.force[idx] -= particles.vol[p] * (stress @ grad_w)
                     # 중력
-                    if i == 1 and j == 1:
-                        grid.force[idx] += particles.m * mpm.gravity   # 중앙 셀에 추가
+                    #if i == 1 and j == 1:   # 중앙 셀에 추가
+                    grid.force[idx] += w *particles.m * mpm.gravity   
         return 
     
     @ti.kernel
@@ -156,37 +155,18 @@ class Simulation:
 
                     w_sum += w
                     v_new += w * grid.vel[idx]
-                    B_new += w * grid.vel[idx].outer_product(-fx)
+                    B_new += w * grid.vel[idx].outer_product(-fx*mpm.dx)
             particles.v[p] = v_new #/ w_sum
             particles.B[p] = B_new #/ w_sum
-            if p == 0:
-                print("Particle 0 weight sum:", w_sum)
+            #if p == 0:
+            #    print("Particle 0 weight sum:", w_sum)
         return
     
     @ti.kernel
     def particle_advection(self, mpm: ti.template(), particles: ti.template()):
         for p in range(mpm.particlesNum):
             particles.x[p] += mpm.dt * particles.v[p]   # 위치 업데이트
-            #particles.x[p], particles.v[p] = self.boundary_conditions(particles.x[p], particles.v[p])   # 경계 조건 적용
         return
-    
-    @ti.func
-    def boundary_conditions(self, x, v):
-        pos = x
-        vel = v
-        if pos.x <= 0.0: 
-            pos.x = 0.0
-            vel.x = -vel.x
-        if pos.x >= 1.0: 
-            pos.x = 1.0
-            vel.x = -vel.x
-        if pos.y <= 0.0: 
-            pos.y = 0.0
-            vel.y = -vel.y
-        if pos.y >= 1.0: 
-            pos.y = 1.0
-            vel.y = -vel.y
-        return pos, vel
     
     @ti.kernel
     def debug_particles(self, particles: ti.template()):

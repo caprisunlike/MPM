@@ -29,17 +29,19 @@ class Boundary:
     def collision(self, grid_position, grid_velocity):   # Separating type만 구현[type 종류 : Sticky(붙기), Separating(밀어내기), Sliding(미끄러지기)]
         grid_pos = grid_position
         grid_vel = grid_velocity
+        dt = self.mpm.dt
+
         for i in range(self.b_num):
             normal = self.b_normal[i]
             boundary_pos = self.b_pos[i]
 
             dist = normal.dot(grid_pos - boundary_pos)   # 현재 위치 기준 거리 : (boundary의 normal벡터)와 (grid와 boundary의 거리)의 내적
-            trial_pos = grid_pos + self.mpm.dt * grid_vel   # 예상되는 다음 위치
+            trial_pos = grid_pos + dt * grid_vel   # 예상되는 다음 위치
             trial_dist = normal.dot(trial_pos - boundary_pos)   # 다음 위치 기준 거리 : (boundary의 normal벡터)와 (다음 grid와 boundary의 거리)의 내적
             
             dist_c = trial_dist - ti.min(dist, 0.0)   # 현재 위치에서 이미 음수인 경우(충돌O) dist값 유지, 양수인 경우(충돌X) 0으로 변경
             if dist_c < 0.0:   # dist_c가 음수면 충돌 발생
-                grid_vel -= dist_c * normal / self.mpm.dt
+                grid_vel -= dist_c * normal / dt
         
         return grid_vel
     
