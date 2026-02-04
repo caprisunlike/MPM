@@ -41,16 +41,18 @@ def main():
     n = 512
     gui = ti.GUI("MPM Simulation", res=(n, n))
 
-    for mpm.t in range(5000):
+    render_interval = 5
+    steps = 10000
+    for s in range(steps):
         sim.simulation()
-        mpm.t += mpm.dt
+        #mpm.t += mpm.dt
 
-        pos = particles.x.to_numpy()   # 파티클 기준 좌표
-        g_pos = pos * (mpm.b_max - mpm.b_min) + mpm.b_min   # gui 기준 좌표
-
-        gui.rect(topleft=(mpm.b_min, mpm.b_min), bottomright=(mpm.b_max, mpm.b_max), color=0xFFFFFF)
-        gui.circles(g_pos, radius=particles.r, color=0x66ccff)
-        gui.show()
+        if s % render_interval == 0:
+            pos = particles.x.to_numpy()   # 파티클 기준 좌표
+            g_pos = pos * (mpm.b_max - mpm.b_min) + mpm.b_min   # gui 기준 좌표
+            gui.rect(topleft=(mpm.b_min, mpm.b_min), bottomright=(mpm.b_max, mpm.b_max), color=0xFFFFFF)
+            gui.circles(g_pos, radius=particles.r, color=0x66ccff)
+            gui.show()
     
     print("Simulation finished.")
 

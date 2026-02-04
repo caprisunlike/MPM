@@ -69,6 +69,4 @@ class Boundary:
 
     def friction(self):
         
-
-
         return
