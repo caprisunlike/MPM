@@ -254,7 +254,6 @@ class Simulation:
         self.boundary = boundary
 
     def simulation(self):
-        # 원본 호출 순서 그대로 :contentReference[oaicite:5]{index=5}
         self.grid.initialize()
 
         wp.launch(
