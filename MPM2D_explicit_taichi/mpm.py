@@ -4,9 +4,12 @@ from grid import Grid
 from particles import Particles
 from simulation import Simulation
 from boundary import Boundary
-
+import imageio
 
 ti.init(arch=ti.gpu)
+USE_GGUI = True
+RECORD = False
+VIDEO_FPS = 50
 
 class MPM:
     def __init__(self):
@@ -39,21 +42,48 @@ def main():
     sim = Simulation(mpm, particles, grid, boundary)
 
     n = 512
-    gui = ti.GUI("MPM Simulation", res=(n, n))
+    lo, hi = mpm.b_min, mpm.b_max
+    if USE_GGUI:
+        win = ti.ui.Window("MPM Simulation", res=(n, n))
+        canvas = win.get_canvas()
+        g_pos = ti.Vector.field(2, dtype=ti.f32, shape=mpm.particlesNum)
+        box = ti.Vector.field(2, dtype=ti.f32, shape=8)
+        box.from_numpy(np.array([[lo, lo], [hi, lo], [hi, hi], [lo, hi], [lo, lo], [lo, hi], [hi, hi], [hi, lo]], dtype=np.float32))
+    else:
+        win = ti.GUI("MPM Simulation", res=(n, n))
 
-    render_interval = 5
-    steps = 10000
+    writer = imageio.get_writer("mpm_taichi.mp4", format="FFMPEG", fps=VIDEO_FPS) if RECORD else None
+
+    render_interval = 20
+    steps = 20000
     for s in range(steps):
         sim.simulation()
         #mpm.t += mpm.dt
 
         if s % render_interval == 0:
-            pos = particles.x.to_numpy()   # 파티클 기준 좌표
-            g_pos = pos * (mpm.b_max - mpm.b_min) + mpm.b_min   # gui 기준 좌표
-            gui.rect(topleft=(mpm.b_min, mpm.b_min), bottomright=(mpm.b_max, mpm.b_max), color=0xFFFFFF)
-            gui.circles(g_pos, radius=particles.r, color=0x66ccff)
-            gui.show()
-    
+            #pos = particles.x.to_numpy()   # 파티클 기준 좌표
+            pos = particles.x.to_numpy() * (hi - lo) + lo   # 화면 기준 좌표
+
+            if USE_GGUI:   # Vulkan 기반 GPU 렌더링
+                g_pos.from_numpy(pos)
+                canvas.set_background_color((0, 0, 0))
+                canvas.lines(box, width=0.003, color=(1.0, 1.0, 1.0))
+                canvas.circles(g_pos, radius=particles.r/n, color=(0.4, 0.8, 1.0))
+            else:   # CPU 기반 렌더링
+                win.rect(topleft=(lo, lo), bottomright=(hi, hi), color=0xFFFFFF)
+                win.circles(pos, radius=particles.r, color=0x66ccff)
+
+            if RECORD:   # 영상 녹화
+                img = win.get_image_buffer_as_numpy() if USE_GGUI else win.get_image()
+                img = np.rot90(img[..., :3])
+                writer.append_data((img*255).astype(np.uint8))
+
+            win.show()
+
+    if RECORD and writer:
+        writer.close()
+        print("Video saved.")
+
     print("Simulation finished.")
 
 if __name__ == "__main__":
