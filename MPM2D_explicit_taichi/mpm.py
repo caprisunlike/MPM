@@ -13,13 +13,13 @@ VIDEO_FPS = 50
 
 class MPM:
     def __init__(self):
-        self.gridNum = 500
+        self.gridNum = 128
         self.particlesNum = 10000
         self.boundaryNum = 4
         self.dx = 1.0 / self.gridNum
         self.inv_dx = 1.0 / self.dx
         self.t = 0.0
-        self.dt = 1e-4
+        self.dt = 5e-5
         self.dim = 2
 
         self.gravity = ti.Vector([0.0, -9.8])

@@ -91,7 +91,7 @@ class Simulation:
                     grad_w = grid.compute_gradient_weights(fx)
 
                     # 내부힘
-                    f_int = -particles.vol[p] * (stress @ grad_w)
+                    f_int = -particles.vol * (stress @ grad_w)
                     # 중력
                     f_grav = w * particles.m * mpm.gravity
 

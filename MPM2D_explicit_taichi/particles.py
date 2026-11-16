@@ -8,22 +8,23 @@ class Particles:
         n = mpm.particlesNum
         dim = mpm.dim
 
-        self.m = 0.01   # mass
+        self.rho = 1.0   # density
+        self.vol = (mpm.dx * 0.5)**2   # volume
+        self.m = self.vol * self.rho   # mass
         self.r = 2.0   # radius
         self.x = ti.Vector.field(n=dim, dtype=ti.f32, shape=n)   # position
         self.v = ti.Vector.field(n=dim, dtype=ti.f32, shape=n)   # velocity
         self.a = ti.Vector.field(n=dim, dtype=ti.f32, shape=n)   # acceleration
-        self.vol = ti.field(dtype=ti.f32, shape=n)   # volume
         self.F = ti.Matrix.field(n=dim, m=dim, dtype=ti.f32, shape=n)   # deformation gradient
         self.B = ti.Matrix.field(n=dim, m=dim, dtype=ti.f32, shape=n)   # affine velocity field
 
-        v = 0.25 #* (self.mpm.dx * self.mpm.dx)
+        v = 0.25 * (self.mpm.dx * self.mpm.dx)
         #self.D = self.calculate_Dp()
         self.D = ti.Matrix([[v, 0.0],
                             [0.0, v]])
         self.D_inv = self.D.inverse()
 
-        self.E = 5000.0   # Young's modulus
+        self.E = 100.0   # Young's modulus
         self.nu = 0.2   # Poisson's ratio
         self.mu = self.E / (2 * (1 + self.nu))   # Lame coefficient
         self.lam = self.E * self.nu / ((1 + self.nu) * (1 - 2 * self.nu))   # Lame coefficient
@@ -38,7 +39,6 @@ class Particles:
             self.x[i] = [(ti.random() * 0.8 + 0.1), (ti.random() * 0.8 + 0.1)]
             self.v[i] = ti.Vector([0.9, 0.0])
             self.a[i] = ti.Vector([0.0, 0.0])
-            self.vol[i] = self.mpm.dx * self.mpm.dx   # 초기 부피
             self.F[i] = ti.Matrix.identity(ti.f32, dim)
             self.B[i] = ti.Matrix.zero(ti.f32, dim, dim)
 
