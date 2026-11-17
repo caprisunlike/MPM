@@ -19,6 +19,19 @@ def _boundary_initialize_kernel(
     b_pos[3] = wp.vec2(0.5, 1.0)
     b_normal[3] = wp.vec2(0.0, -1.0)
 
+@wp.func
+def boundary_friction(
+    vel: wp.vec2,
+    delta_vn: float,
+    normal: wp.vec2,
+    mu_f: float,
+) -> wp.vec2:
+    v = vel
+    vt = v - normal * wp.dot(v, normal)
+    if wp.length(vt) > 1e-7:
+        v = v - wp.min(wp.length(vt), mu_f*delta_vn) * (vt / wp.length(vt))
+
+    return v
 
 @wp.func
 def boundary_collision(
@@ -28,6 +41,7 @@ def boundary_collision(
     b_normal: wp.array(dtype=wp.vec2),
     b_num: int,
     dt: float,
+    mu_f: float,
 ) -> wp.vec2:
     grid_pos = grid_position
     grid_vel = grid_velocity
@@ -42,7 +56,9 @@ def boundary_collision(
 
         dist_c = trial_dist - wp.min(dist, 0.0)
         if dist_c < 0.0:
-            grid_vel = grid_vel - dist_c * normal / dt
+            delta_vn = -dist_c / dt
+            grid_vel = grid_vel + delta_vn * normal
+            grid_vel = boundary_friction(grid_vel, delta_vn, normal, mu_f)
 
     return grid_vel
 
@@ -54,6 +70,8 @@ class Boundary:
 
         self.b_pos = wp.zeros(self.b_num, dtype=wp.vec2)
         self.b_normal = wp.zeros(self.b_num, dtype=wp.vec2)
+
+        self.mu_f = 0.2
 
         self.initialize()
 

@@ -14,7 +14,7 @@ wp.init()
 
 class MPM:
     def __init__(self):
-        self.gridNum = 500
+        self.gridNum = 128
         self.particlesNum = 10000
         self.boundaryNum = 4
         self.dx = 1.0 / self.gridNum

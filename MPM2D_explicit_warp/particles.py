@@ -56,7 +56,7 @@ class Particles:
         self.F = wp.zeros(n, dtype=wp.mat22)
         self.B = wp.zeros(n, dtype=wp.mat22)
 
-        v = 0.25
+        v = 0.25 * (self.mpm.dx * self.mpm.dx)
         self.D = wp.mat22(v, 0.0,
                           0.0, v)
         self.D_inv = wp.inverse(self.D)

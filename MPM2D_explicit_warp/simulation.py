@@ -144,6 +144,7 @@ def grid_velocity_update(
     b_num: int,
 
     dt: float,
+    mu_f: float,
 ):
     i, j = wp.tid()
     m = grid_mass[i, j]
@@ -157,6 +158,7 @@ def grid_velocity_update(
         b_normal,
         b_num,
         dt,
+        mu_f,
     )
 
 
@@ -315,6 +317,7 @@ class Simulation:
                 self.boundary.b_normal,
                 int(self.boundary.b_num),
                 float(self.mpm.dt),
+                float(self.boundary.mu_f),
             ],
         )
 

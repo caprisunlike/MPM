@@ -54,7 +54,7 @@ def main():
 
     writer = imageio.get_writer("mpm_taichi.mp4", format="FFMPEG", fps=VIDEO_FPS) if RECORD else None
 
-    render_interval = 20
+    render_interval = 50
     steps = 20000
     for s in range(steps):
         sim.simulation()
