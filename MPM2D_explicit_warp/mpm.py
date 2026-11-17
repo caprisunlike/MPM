@@ -19,7 +19,7 @@ class MPM:
         self.boundaryNum = 4
         self.dx = 1.0 / self.gridNum
         self.inv_dx = 1.0 / self.dx
-        self.dt = 1e-4
+        self.dt = 5e-5
         self.dim = 2
         self.gravity = wp.vec2(0.0, -9.8)
         self.b_min = 0.05
@@ -45,7 +45,7 @@ def main():
     conn = connect_pipe()
 
     steps = 20000
-    send_every = 4
+    send_every = 20
 
     try:
         for frame in range(steps):

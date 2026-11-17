@@ -93,7 +93,7 @@ def compute_explicit_grid_forces(
     grid_force: wp.array(dtype=wp.vec2, ndim=2),
 
     p_x: wp.array(dtype=wp.vec2),
-    p_vol: wp.array(dtype=wp.float32),
+    p_vol: float,
     p_F: wp.array(dtype=wp.mat22),
     p_m: float,
     gravity: wp.vec2,
@@ -123,7 +123,7 @@ def compute_explicit_grid_forces(
             grad_w = grid_compute_gradient_weights(fx, inv_dx)
 
             # 내부힘
-            f_int = -p_vol[p] * (stress * grad_w)
+            f_int = -p_vol * (stress * grad_w)
             # 중력
             f_grav = w * p_m * gravity
 

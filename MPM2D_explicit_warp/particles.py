@@ -6,7 +6,6 @@ def _particles_initialize_kernel(
     x: wp.array(dtype=wp.vec2),
     v: wp.array(dtype=wp.vec2),
     a: wp.array(dtype=wp.vec2),
-    vol: wp.array(dtype=wp.float32),
     F: wp.array(dtype=wp.mat22),
     B: wp.array(dtype=wp.mat22),
     dx: float,
@@ -19,8 +18,6 @@ def _particles_initialize_kernel(
     x[i] = wp.vec2(wp.randf(state) * 0.8 + 0.1, wp.randf(state) * 0.8 + 0.1)
     v[i] = wp.vec2(0.9, 0.0)
     a[i] = wp.vec2(0.0, 0.0)
-    vol[i] = dx * dx
-
     F[i] = wp.mat22(1.0, 0.0,
                     0.0, 1.0)
     B[i] = wp.mat22(0.0, 0.0,
@@ -45,13 +42,14 @@ class Particles:
         n = mpm.particlesNum
         dim = mpm.dim  # 2
 
-        self.m = 0.01
+        self.rho = 1.0
+        self.vol = (0.5 * self.mpm.dx)*(0.5 * self.mpm.dx)
+        self.m = self.rho * self.vol
         self.r = 2.0
 
         self.x = wp.zeros(n, dtype=wp.vec2)
         self.v = wp.zeros(n, dtype=wp.vec2)
         self.a = wp.zeros(n, dtype=wp.vec2)
-        self.vol = wp.zeros(n, dtype=wp.float32)
 
         self.F = wp.zeros(n, dtype=wp.mat22)
         self.B = wp.zeros(n, dtype=wp.mat22)
@@ -61,7 +59,7 @@ class Particles:
                           0.0, v)
         self.D_inv = wp.inverse(self.D)
 
-        self.E = 5000.0
+        self.E = 100.0
         self.nu = 0.2
         self.mu = self.E / (2.0 * (1.0 + self.nu))
         self.lam = self.E * self.nu / ((1.0 + self.nu) * (1.0 - 2.0 * self.nu))
@@ -72,5 +70,5 @@ class Particles:
         wp.launch(
             kernel=_particles_initialize_kernel,
             dim=self.mpm.particlesNum,
-            inputs=[self.x, self.v, self.a, self.vol, self.F, self.B, float(self.mpm.dx), 2026],
+            inputs=[self.x, self.v, self.a, self.F, self.B, float(self.mpm.dx), 2026],
         )
