@@ -4,7 +4,12 @@ SIGGRAPH 2016 MPM Course Notes를 바탕으로 Material Point Method를 처음�
 같은 알고리즘을 Taichi와 NVIDIA Warp 두 가지 GPU 프레임워크로 구현하였으며,
 Warp 버전은 시뮬레이션 결과를 NVIDIA Omniverse(USD Composer)로 실시간 전송해 시각화.
 
-[![MPM2D_explicit_taichi](https://github.com/user-attachments/assets/a1c7a178-6268-4955-9b01-4232d8765e84)](https://github.com/caprisunlike/MPM/tree/main/MPM2D_explicit_taichi)
+<a href="https://github.com/caprisunlike/MPM/tree/main/MPM2D_explicit_taichi">
+  <img src="https://github.com/user-attachments/assets/a1c7a178-6268-4955-9b01-4232d8765e84" width="400" height="auto" alt="MPM2D_explicit_taichi">
+</a>
+<a href="https://github.com/caprisunlike/MPM/tree/main/MPM2D_explicit_warp">
+  <img src="https://github.com/user-attachments/assets/017f7722-9c5c-42c4-9725-70fdc52d10b8" width="400" height="auto" alt="MPM2D_explicit_warp">
+</a>
 
 
 ## Features
